@@ -230,15 +230,24 @@ void ASurvivor::StopFire()
 
 void ASurvivor::UpdateFireRate()
 {
+    // Always clear the existing timer first
+    GetWorldTimerManager().ClearTimer(FireTimerHandle);
+    
+    // If we're currently firing, restart the timer with the new rate
     if (bIsFiring && bCanFire)
     {
-        GetWorldTimerManager().ClearTimer(FireTimerHandle);
+        // Fire once immediately to ensure responsive rate change
+        Fire();
+        // Set up new timer with updated rate
         GetWorldTimerManager().SetTimer(FireTimerHandle, this, &ASurvivor::Fire, FireRate, true);
     }
 }
 
 void ASurvivor::ModifyFireRate(float Multiplier, bool bResetToOriginal)
 {
+    // Store the previous fire rate for comparison
+    float PreviousRate = FireRate;
+    
     if (bResetToOriginal)
     {
         FireRate = OriginalFireRate;
@@ -247,7 +256,12 @@ void ASurvivor::ModifyFireRate(float Multiplier, bool bResetToOriginal)
     {
         FireRate *= Multiplier;
     }
-    UpdateFireRate();
+    
+    // Only update if the rate actually changed
+    if (PreviousRate != FireRate)
+    {
+        UpdateFireRate();
+    }
 }
 
 void ASurvivor::Fire()

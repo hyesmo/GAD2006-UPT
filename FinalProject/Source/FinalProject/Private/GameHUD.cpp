@@ -334,10 +334,15 @@ void AGameHUD::DrawLoseScreen()
     FString LoseText = TEXT("YOU LOSE");
     float TextWidth, TextHeight;
     GetTextSize(LoseText, TextWidth, TextHeight, HUDFont, 2.0f);
-    DrawText(LoseText, FColor::Red, CenterX - TextWidth * 0.5f, CenterY - TextHeight, HUDFont, 2.0f);
+    DrawText(LoseText, FColor::Red, CenterX - TextWidth * 0.5f, CenterY - TextHeight * 2, HUDFont, 2.0f);
+
+    // Draw final score
+    FString ScoreText = FString::Printf(TEXT("Final Score: %d"), CurrentScore);
+    GetTextSize(ScoreText, TextWidth, TextHeight, HUDFont, 1.75f);
+    DrawText(ScoreText, FColor::Yellow, CenterX - TextWidth * 0.5f, CenterY, HUDFont, 1.75f);
 
     // Draw retry instruction
     FString RetryText = TEXT("Press SPACE to Retry");
     GetTextSize(RetryText, TextWidth, TextHeight, HUDFont, 1.5f);
-    DrawText(RetryText, FColor::White, CenterX - TextWidth * 0.5f, CenterY + TextHeight, HUDFont, 1.5f);
+    DrawText(RetryText, FColor::White, CenterX - TextWidth * 0.5f, CenterY + TextHeight * 2, HUDFont, 1.5f);
 } 

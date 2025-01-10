@@ -92,3 +92,9 @@ float ATopDownGameMode::GetMultiKillTimeRemaining() const
     
     return MultiKillTimeWindow - TimeElapsed;
 }
+
+void ATopDownGameMode::StartGame()
+{
+    // Transition to the gameplay level
+    UGameplayStatics::OpenLevel(GetWorld(), TEXT("GameplayLevel"));
+}

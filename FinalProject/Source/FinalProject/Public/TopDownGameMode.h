@@ -37,6 +37,9 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Scoring")
     FOnScoreUpdatedSignature OnScoreUpdated;
 
+    UFUNCTION(BlueprintCallable, Category = "Game")
+    void StartGame();
+
 protected:
     void UpdateMultiKill();
 
