@@ -14,5 +14,10 @@ enum class EPowerUpType : uint8
     HEALTH_REGEN UMETA(DisplayName = "Health Regeneration"),
     SHIELD UMETA(DisplayName = "Shield"),
     INFINITE_AMMO UMETA(DisplayName = "Infinite Ammo"),
-    EXPLOSIVE_ROUNDS UMETA(DisplayName = "Explosive Rounds")
+    EXPLOSIVE_ROUNDS UMETA(DisplayName = "Explosive Rounds"),
+    VAMPIRE UMETA(DisplayName = "Vampire"),
+    MULTI_SHOT UMETA(DisplayName = "Multi-Shot"),
+    PIERCING_ROUNDS UMETA(DisplayName = "Piercing Rounds"),
+    FREEZE_AURA UMETA(DisplayName = "Freeze Aura"),
+    CHAIN_LIGHTNING UMETA(DisplayName = "Chain Lightning")
 }; 

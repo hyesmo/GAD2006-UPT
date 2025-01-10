@@ -125,14 +125,50 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
     float ExplosionDamage;
 
+    // New power-up properties
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasVampire;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float VampireLifeSteal;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasMultiShot;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    int32 MultiShotCount;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasPiercingRounds;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasFreezeAura;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float FreezeAuraRadius;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasChainLightning;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float ChainLightningRange;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float ChainLightningDamage;
+
     // Function to modify fire rate (for power-ups)
     void ModifyFireRate(float Multiplier, bool bResetToOriginal = false);
 
-    // New power-up functions
+    // Power-up activation functions
     void ActivateShield(float Duration, float ShieldAmount);
     void ActivateHealthRegen(float Duration, float RegenRate);
     void ActivateInfiniteAmmo(float Duration);
     void ActivateExplosiveRounds(float Duration, float Radius, float Damage);
+    void ActivateVampire(float Duration);
+    void ActivateMultiShot(float Duration);
+    void ActivatePiercingRounds(float Duration);
+    void ActivateFreezeAura(float Duration);
+    void ActivateChainLightning(float Duration);
 
     UFUNCTION()
     void RestartGame();

@@ -39,6 +39,27 @@ public:
     UPROPERTY(EditAnywhere, Category = "Combat|Explosive")
     bool bDrawDebugSphere;
 
+    // Piercing rounds properties
+    UPROPERTY(EditAnywhere, Category = "Combat|Piercing")
+    bool bCanPierce;
+
+    // Chain lightning properties
+    UPROPERTY(EditAnywhere, Category = "Combat|ChainLightning")
+    bool bHasChainLightning;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|ChainLightning")
+    float ChainLightningRange;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|ChainLightning")
+    float ChainLightningDamage;
+
+    // Vampire effect properties
+    UPROPERTY(EditAnywhere, Category = "Combat|Vampire")
+    bool bHasVampireEffect;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|Vampire")
+    float VampireLifeStealPercent;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -49,4 +70,14 @@ protected:
 
     // Helper function for explosion damage
     void ApplyExplosionDamage(const FVector& ExplosionLocation);
+
+    // Helper function for chain lightning
+    void ApplyChainLightning(const FVector& StartLocation, AActor* FirstTarget);
+
+    // Helper function for vampire healing
+    void ApplyVampireHealing(float DamageDealt);
+
+private:
+    // Keep track of actors hit by piercing rounds to avoid hitting them multiple times
+    TArray<AActor*> HitActors;
 }; 

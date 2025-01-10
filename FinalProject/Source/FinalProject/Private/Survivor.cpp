@@ -7,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "SurvivorProjectile.h"
 #include "Kismet/GameplayStatics.h"
+#include "Enemy.h"
 
 // Sets default values
 ASurvivor::ASurvivor()
@@ -70,6 +71,16 @@ ASurvivor::ASurvivor()
     bHasExplosiveRounds = false;
     ExplosionRadius = 200.0f;
     ExplosionDamage = 50.0f;
+    bHasVampire = false;
+    VampireLifeSteal = 0.2f; // 20% life steal
+    bHasMultiShot = false;
+    MultiShotCount = 3;
+    bHasPiercingRounds = false;
+    bHasFreezeAura = false;
+    FreezeAuraRadius = 300.0f;
+    bHasChainLightning = false;
+    ChainLightningRange = 300.0f;
+    ChainLightningDamage = 30.0f;
 }
 
 // Called when the game starts or when spawned
@@ -121,6 +132,39 @@ void ASurvivor::UpdatePowerUpEffects(float DeltaTime)
     if (bHasHealthRegen)
     {
         UpdateHealthRegen(DeltaTime);
+    }
+
+    // Handle freeze aura
+    if (bHasFreezeAura)
+    {
+        // Find all enemies within range
+        TArray<AActor*> OverlappingActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemy::StaticClass(), OverlappingActors);
+
+        for (AActor* Actor : OverlappingActors)
+        {
+            if (AEnemy* Enemy = Cast<AEnemy>(Actor))
+            {
+                float Distance = FVector::Distance(GetActorLocation(), Enemy->GetActorLocation());
+                if (Distance <= FreezeAuraRadius)
+                {
+                    // Slow down enemy movement
+                    if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
+                    {
+                        // Slow to 50% speed
+                        MovementComp->MaxWalkSpeed = Enemy->GetDefaultMovementSpeed() * 0.5f;
+                    }
+                }
+                else
+                {
+                    // Reset enemy speed if outside range
+                    if (UCharacterMovementComponent* MovementComp = Enemy->GetCharacterMovement())
+                    {
+                        MovementComp->MaxWalkSpeed = Enemy->GetDefaultMovementSpeed();
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -282,36 +326,79 @@ void ASurvivor::Fire()
     
     // Set spawn location slightly in front of player
     FVector SpawnLocation = GetActorLocation() + (Direction * 100.0f);
-    
-    // Calculate rotation based on direction
-    FRotator SpawnRotation = Direction.Rotation();
+
+    // Handle multi-shot
+    TArray<FRotator> ProjectileRotations;
+    if (bHasMultiShot)
+    {
+        // Calculate spread angles for multi-shot
+        const float SpreadAngle = 10.0f; // Degrees between shots
+        const float StartAngle = -((MultiShotCount - 1) * SpreadAngle * 0.5f);
+        
+        for (int32 i = 0; i < MultiShotCount; ++i)
+        {
+            float CurrentAngle = StartAngle + (i * SpreadAngle);
+            FRotator SpreadRotation = Direction.Rotation();
+            SpreadRotation.Yaw += CurrentAngle;
+            ProjectileRotations.Add(SpreadRotation);
+        }
+    }
+    else
+    {
+        // Single shot
+        ProjectileRotations.Add(Direction.Rotation());
+    }
     
     // Spawn parameters
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
     SpawnParams.Instigator = GetInstigator();
     
-    // Spawn the projectile
+    // Spawn the projectile(s)
     if (UWorld* World = GetWorld())
     {
-        if (ASurvivorProjectile* Projectile = World->SpawnActor<ASurvivorProjectile>(SpawnLocation, SpawnRotation, SpawnParams))
+        for (const FRotator& SpawnRotation : ProjectileRotations)
         {
-            // Apply damage multiplier to projectile
-            Projectile->Damage *= DamageMultiplier;
+            if (ASurvivorProjectile* Projectile = World->SpawnActor<ASurvivorProjectile>(SpawnLocation, SpawnRotation, SpawnParams))
+            {
+                // Apply damage multiplier to projectile
+                Projectile->Damage *= DamageMultiplier;
 
-            // Set explosive rounds if active
-            if (bHasExplosiveRounds)
-            {
-                Projectile->bIsExplosive = true;
-                Projectile->ExplosionRadius = ExplosionRadius;
-                Projectile->ExplosionDamage = ExplosionDamage;
+                // Set explosive rounds if active
+                if (bHasExplosiveRounds)
+                {
+                    Projectile->bIsExplosive = true;
+                    Projectile->ExplosionRadius = ExplosionRadius;
+                    Projectile->ExplosionDamage = ExplosionDamage;
+                }
+
+                // Set piercing rounds if active
+                if (bHasPiercingRounds)
+                {
+                    Projectile->bCanPierce = true;
+                }
+
+                // Set chain lightning if active
+                if (bHasChainLightning)
+                {
+                    Projectile->bHasChainLightning = true;
+                    Projectile->ChainLightningRange = ChainLightningRange;
+                    Projectile->ChainLightningDamage = ChainLightningDamage;
+                }
+
+                // Set vampire effect if active
+                if (bHasVampire)
+                {
+                    Projectile->bHasVampireEffect = true;
+                    Projectile->VampireLifeStealPercent = VampireLifeSteal;
+                }
             }
-            
-            // Consume ammo if not infinite
-            if (!bHasInfiniteAmmo)
-            {
-                CurrentAmmo--;
-            }
+        }
+
+        // Consume ammo if not infinite (only once per Fire() call, regardless of multi-shot)
+        if (!bHasInfiniteAmmo)
+        {
+            CurrentAmmo--;
         }
     }
 }
@@ -496,6 +583,66 @@ void ASurvivor::ActivateExplosiveRounds(float Duration, float Radius, float Dama
     GetWorldTimerManager().SetTimer(ExplosiveTimerHandle, [this]()
     {
         bHasExplosiveRounds = false;
+    }, Duration, false);
+}
+
+void ASurvivor::ActivateVampire(float Duration)
+{
+    bHasVampire = true;
+
+    // Set timer to deactivate vampire effect
+    FTimerHandle VampireTimerHandle;
+    GetWorldTimerManager().SetTimer(VampireTimerHandle, [this]()
+    {
+        bHasVampire = false;
+    }, Duration, false);
+}
+
+void ASurvivor::ActivateMultiShot(float Duration)
+{
+    bHasMultiShot = true;
+
+    // Set timer to deactivate multi-shot
+    FTimerHandle MultiShotTimerHandle;
+    GetWorldTimerManager().SetTimer(MultiShotTimerHandle, [this]()
+    {
+        bHasMultiShot = false;
+    }, Duration, false);
+}
+
+void ASurvivor::ActivatePiercingRounds(float Duration)
+{
+    bHasPiercingRounds = true;
+
+    // Set timer to deactivate piercing rounds
+    FTimerHandle PiercingTimerHandle;
+    GetWorldTimerManager().SetTimer(PiercingTimerHandle, [this]()
+    {
+        bHasPiercingRounds = false;
+    }, Duration, false);
+}
+
+void ASurvivor::ActivateFreezeAura(float Duration)
+{
+    bHasFreezeAura = true;
+
+    // Set timer to deactivate freeze aura
+    FTimerHandle FreezeTimerHandle;
+    GetWorldTimerManager().SetTimer(FreezeTimerHandle, [this]()
+    {
+        bHasFreezeAura = false;
+    }, Duration, false);
+}
+
+void ASurvivor::ActivateChainLightning(float Duration)
+{
+    bHasChainLightning = true;
+
+    // Set timer to deactivate chain lightning
+    FTimerHandle ChainLightningTimerHandle;
+    GetWorldTimerManager().SetTimer(ChainLightningTimerHandle, [this]()
+    {
+        bHasChainLightning = false;
     }, Duration, false);
 }
 

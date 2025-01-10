@@ -146,8 +146,8 @@ float AEnemy::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AC
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         GetCharacterMovement()->StopMovementImmediately();
         
-        // 40% chance to give a power-up
-        if (FMath::RandRange(0.0f, 1.0f) <= 0.4f)
+        // 70% chance to give a power-up
+        if (FMath::RandRange(0.0f, 1.0f) <= 0.7f)
         {
             // Get player reference
             if (ASurvivor* Player = Cast<ASurvivor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
@@ -170,6 +170,11 @@ float AEnemy::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AC
                 AvailablePowerUps.Add(EPowerUpType::SHIELD);
                 AvailablePowerUps.Add(EPowerUpType::INFINITE_AMMO);
                 AvailablePowerUps.Add(EPowerUpType::EXPLOSIVE_ROUNDS);
+                AvailablePowerUps.Add(EPowerUpType::VAMPIRE);
+                AvailablePowerUps.Add(EPowerUpType::MULTI_SHOT);
+                AvailablePowerUps.Add(EPowerUpType::PIERCING_ROUNDS);
+                AvailablePowerUps.Add(EPowerUpType::FREEZE_AURA);
+                AvailablePowerUps.Add(EPowerUpType::CHAIN_LIGHTNING);
 
                 // Remove power-ups that are still active with more than 5 seconds remaining
                 if (GameHUD)
@@ -284,6 +289,26 @@ float AEnemy::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AC
 
                         case EPowerUpType::EXPLOSIVE_ROUNDS:
                             Player->ActivateExplosiveRounds(PowerUpDuration, 200.0f, 50.0f); // 200 radius, 50 damage
+                            break;
+
+                        case EPowerUpType::VAMPIRE:
+                            Player->ActivateVampire(PowerUpDuration);
+                            break;
+
+                        case EPowerUpType::MULTI_SHOT:
+                            Player->ActivateMultiShot(PowerUpDuration);
+                            break;
+
+                        case EPowerUpType::PIERCING_ROUNDS:
+                            Player->ActivatePiercingRounds(PowerUpDuration);
+                            break;
+
+                        case EPowerUpType::FREEZE_AURA:
+                            Player->ActivateFreezeAura(PowerUpDuration);
+                            break;
+
+                        case EPowerUpType::CHAIN_LIGHTNING:
+                            Player->ActivateChainLightning(PowerUpDuration);
                             break;
                     }
                     

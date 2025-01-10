@@ -155,7 +155,7 @@ void AGameHUD::AddActivePowerUp(EPowerUpType Type, float Duration)
 void AGameHUD::DrawPowerUpStatus()
 {
     const float PowerUpX = Canvas->SizeX * 0.8f;
-    float PowerUpY = Canvas->SizeY * 0.7f;
+    float PowerUpY = Canvas->SizeY * 0.4f;
     const float LineHeight = 20.0f;
     const float BarWidth = 150.0f;
     const float BarHeight = 10.0f;
@@ -204,6 +204,26 @@ void AGameHUD::DrawPowerUpStatus()
             case EPowerUpType::EXPLOSIVE_ROUNDS:
                 PowerUpName = TEXT("Explosive Rounds");
                 PowerUpColor = FColor(255, 64, 0);
+                break;
+            case EPowerUpType::VAMPIRE:
+                PowerUpName = TEXT("Vampire");
+                PowerUpColor = FColor(128, 0, 64); // Dark red/purple
+                break;
+            case EPowerUpType::MULTI_SHOT:
+                PowerUpName = TEXT("Spread");
+                PowerUpColor = FColor(192, 0, 255); // Purple
+                break;
+            case EPowerUpType::PIERCING_ROUNDS:
+                PowerUpName = TEXT("Frozen Bullets");
+                PowerUpColor = FColor(0, 192, 255); // Light blue
+                break;
+            case EPowerUpType::FREEZE_AURA:
+                PowerUpName = TEXT("Freeze Aura");
+                PowerUpColor = FColor(128, 255, 255); // Ice blue
+                break;
+            case EPowerUpType::CHAIN_LIGHTNING:
+                PowerUpName = TEXT("Chain Lightning");
+                PowerUpColor = FColor(255, 255, 0); // Electric yellow
                 break;
         }
 

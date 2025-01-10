@@ -22,7 +22,7 @@ public:
     virtual void Tick(float DeltaTime) override;
 
     UPROPERTY(EditAnywhere, Category = "Movement")
-    float MovementSpeed = 300.0f;
+    float MovementSpeed = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float MaxHealth = 100.0f;
@@ -37,7 +37,7 @@ public:
     float DamageRadius = 100.0f;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
-    float DamageCooldown = 1.0f;
+    float DamageCooldown = 0.5f;
 
     UPROPERTY()
     float LastDamageTime = 0.0f;
@@ -46,6 +46,8 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FEnemyDeathSignature OnEnemyDeath;
+
+    float GetDefaultMovementSpeed() const { return MovementSpeed; }
 
 protected:
     virtual void BeginPlay() override;

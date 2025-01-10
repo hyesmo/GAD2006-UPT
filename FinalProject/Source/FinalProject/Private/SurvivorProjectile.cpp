@@ -7,6 +7,7 @@
 #include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Survivor.h"
 
 ASurvivorProjectile::ASurvivorProjectile()
 {
@@ -41,6 +42,14 @@ ASurvivorProjectile::ASurvivorProjectile()
     ExplosionRadius = 200.0f;
     ExplosionDamage = 50.0f;
     bDrawDebugSphere = false;
+
+    // Initialize new properties
+    bCanPierce = false;
+    bHasChainLightning = false;
+    ChainLightningRange = 300.0f;
+    ChainLightningDamage = 30.0f;
+    bHasVampireEffect = false;
+    VampireLifeStealPercent = 0.2f;
 }
 
 void ASurvivorProjectile::BeginPlay()
@@ -57,8 +66,30 @@ void ASurvivorProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* Other
 {
     if (OtherActor && OtherActor != this)
     {
+        // Skip if we've already hit this actor (for piercing rounds)
+        if (HitActors.Contains(OtherActor))
+        {
+            return;
+        }
+
+        // Add to hit actors list
+        HitActors.Add(OtherActor);
+
         // Apply direct damage first
-        UGameplayStatics::ApplyDamage(OtherActor, Damage, GetInstigatorController(), this, UDamageType::StaticClass());
+        float DealtDamage = Damage;
+        UGameplayStatics::ApplyDamage(OtherActor, DealtDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+
+        // Handle vampire effect
+        if (bHasVampireEffect)
+        {
+            ApplyVampireHealing(DealtDamage);
+        }
+
+        // Handle chain lightning
+        if (bHasChainLightning)
+        {
+            ApplyChainLightning(Hit.Location, OtherActor);
+        }
 
         // Handle explosion if enabled
         if (bIsExplosive)
@@ -72,8 +103,11 @@ void ASurvivorProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* Other
             }
         }
 
-        // Destroy the projectile
-        Destroy();
+        // Only destroy the projectile if it's not piercing or if we've hit too many targets
+        if (!bCanPierce || HitActors.Num() >= 3) // Allow piercing through up to 3 enemies
+        {
+            Destroy();
+        }
     }
 }
 
@@ -100,5 +134,47 @@ void ASurvivorProjectile::ApplyExplosionDamage(const FVector& ExplosionLocation)
                 UGameplayStatics::ApplyDamage(Actor, FinalDamage, GetInstigatorController(), this, UDamageType::StaticClass());
             }
         }
+    }
+}
+
+void ASurvivorProjectile::ApplyChainLightning(const FVector& StartLocation, AActor* FirstTarget)
+{
+    // Get all potential targets
+    TArray<AActor*> PotentialTargets;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemy::StaticClass(), PotentialTargets);
+
+    // Remove the first target from potential targets
+    PotentialTargets.Remove(FirstTarget);
+
+    // Find and damage nearby enemies
+    for (AActor* Target : PotentialTargets)
+    {
+        float Distance = FVector::Distance(StartLocation, Target->GetActorLocation());
+        if (Distance <= ChainLightningRange)
+        {
+            // Apply chain lightning damage
+            UGameplayStatics::ApplyDamage(Target, ChainLightningDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+
+            // Optional: Draw debug line to show chain
+            if (bDrawDebugSphere)
+            {
+                DrawDebugLine(GetWorld(), StartLocation, Target->GetActorLocation(), FColor::Blue, false, 2.0f);
+            }
+
+            // Apply vampire healing if active
+            if (bHasVampireEffect)
+            {
+                ApplyVampireHealing(ChainLightningDamage);
+            }
+        }
+    }
+}
+
+void ASurvivorProjectile::ApplyVampireHealing(float DamageDealt)
+{
+    if (ASurvivor* Player = Cast<ASurvivor>(GetInstigator()))
+    {
+        float HealAmount = DamageDealt * VampireLifeStealPercent;
+        Player->CurrentHealth = FMath::Min(Player->MaxHealth, Player->CurrentHealth + HealAmount);
     }
 } 
