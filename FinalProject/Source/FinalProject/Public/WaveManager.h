@@ -6,6 +6,8 @@
 #include "StandardZombie.h"
 #include "FastZombie.h"
 #include "TankZombie.h"
+#include "TutorialManager.h"
+#include "TutorialHUD.h"
 #include "WaveManager.generated.h"
 
 UCLASS()
@@ -76,6 +78,15 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Wave Settings")
     float DifficultyMultiplier = 1.2f;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HUD Classes", meta = (DisplayName = "Tutorial HUD Class"))
+    TSubclassOf<ATutorialHUD> TutorialHUDClass;
+
+    UPROPERTY()
+    ATutorialManager* TutorialManager;
+
+    UFUNCTION()
+    void OnTutorialCompleted();
 
 protected:
     virtual void BeginPlay() override;

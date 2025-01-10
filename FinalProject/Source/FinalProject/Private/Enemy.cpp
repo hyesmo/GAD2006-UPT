@@ -146,109 +146,149 @@ float AEnemy::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AC
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         GetCharacterMovement()->StopMovementImmediately();
         
-        // 20% chance to give a power-up
-        if (FMath::RandRange(0.0f, 1.0f) <= 0.2f)
+        // 40% chance to give a power-up
+        if (FMath::RandRange(0.0f, 1.0f) <= 0.4f)
         {
             // Get player reference
             if (ASurvivor* Player = Cast<ASurvivor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
             {
-                // Select random power-up type
-                TArray<EPowerUpType> PowerUpTypes;
-                PowerUpTypes.Add(EPowerUpType::SPEED_BOOST);
-                PowerUpTypes.Add(EPowerUpType::DAMAGE_MULTIPLIER);
-                PowerUpTypes.Add(EPowerUpType::RAPID_FIRE);
-                PowerUpTypes.Add(EPowerUpType::INVINCIBILITY);
-                PowerUpTypes.Add(EPowerUpType::DOUBLE_POINTS);
-                
-                int32 RandomIndex = FMath::RandRange(0, PowerUpTypes.Num() - 1);
-                EPowerUpType SelectedPowerUp = PowerUpTypes[RandomIndex];
-                
-                // Apply power-up effects directly
-                const float PowerUpDuration = 10.0f;
-                FTimerHandle PowerUpTimerHandle;
-
-                switch (SelectedPowerUp)
-                {
-                    case EPowerUpType::SPEED_BOOST:
-                        Player->GetCharacterMovement()->MaxWalkSpeed *= 1.5f;
-                        GetWorld()->GetTimerManager().SetTimer(
-                            PowerUpTimerHandle,
-                            [Player]()
-                            {
-                                if (IsValid(Player))
-                                {
-                                    Player->GetCharacterMovement()->MaxWalkSpeed /= 1.5f;
-                                }
-                            },
-                            PowerUpDuration,
-                            false);
-                        break;
-                        
-                    case EPowerUpType::DAMAGE_MULTIPLIER:
-                        Player->DamageMultiplier = 2.0f;
-                        GetWorld()->GetTimerManager().SetTimer(
-                            PowerUpTimerHandle,
-                            [Player]()
-                            {
-                                if (IsValid(Player))
-                                {
-                                    Player->DamageMultiplier = 1.0f;
-                                }
-                            },
-                            PowerUpDuration,
-                            false);
-                        break;
-                        
-                    case EPowerUpType::RAPID_FIRE:
-                        Player->ModifyFireRate(0.5f);  // Reduce fire rate by half
-                        GetWorld()->GetTimerManager().SetTimer(
-                            PowerUpTimerHandle,
-                            [Player]()
-                            {
-                                if (IsValid(Player))
-                                {
-                                    Player->ModifyFireRate(1.0f, true);  // Reset to original fire rate
-                                }
-                            },
-                            PowerUpDuration,
-                            false);
-                        break;
-                        
-                    case EPowerUpType::INVINCIBILITY:
-                        Player->bIsInvulnerable = true;
-                        GetWorld()->GetTimerManager().SetTimer(
-                            PowerUpTimerHandle,
-                            [Player]()
-                            {
-                                if (IsValid(Player))
-                                {
-                                    Player->bIsInvulnerable = false;
-                                }
-                            },
-                            PowerUpDuration,
-                            false);
-                        break;
-                        
-                    case EPowerUpType::DOUBLE_POINTS:
-                        Player->ScoreMultiplier = 2.0f;
-                        GetWorld()->GetTimerManager().SetTimer(
-                            PowerUpTimerHandle,
-                            [Player]()
-                            {
-                                if (IsValid(Player))
-                                {
-                                    Player->ScoreMultiplier = 1.0f;
-                                }
-                            },
-                            PowerUpDuration,
-                            false);
-                        break;
-                }
-                
-                // Update HUD
+                // Get HUD to check active power-ups
+                AGameHUD* GameHUD = nullptr;
                 if (APlayerController* PC = Cast<APlayerController>(Player->GetController()))
                 {
-                    if (AGameHUD* GameHUD = Cast<AGameHUD>(PC->GetHUD()))
+                    GameHUD = Cast<AGameHUD>(PC->GetHUD());
+                }
+
+                // Create array of available power-up types
+                TArray<EPowerUpType> AvailablePowerUps;
+                AvailablePowerUps.Add(EPowerUpType::SPEED_BOOST);
+                AvailablePowerUps.Add(EPowerUpType::DAMAGE_MULTIPLIER);
+                AvailablePowerUps.Add(EPowerUpType::RAPID_FIRE);
+                AvailablePowerUps.Add(EPowerUpType::INVINCIBILITY);
+                AvailablePowerUps.Add(EPowerUpType::DOUBLE_POINTS);
+                AvailablePowerUps.Add(EPowerUpType::HEALTH_REGEN);
+                AvailablePowerUps.Add(EPowerUpType::SHIELD);
+                AvailablePowerUps.Add(EPowerUpType::INFINITE_AMMO);
+                AvailablePowerUps.Add(EPowerUpType::EXPLOSIVE_ROUNDS);
+
+                // Remove power-ups that are still active with more than 5 seconds remaining
+                if (GameHUD)
+                {
+                    for (int32 i = AvailablePowerUps.Num() - 1; i >= 0; --i)
+                    {
+                        if (GameHUD->IsPowerUpActiveWithDuration(AvailablePowerUps[i], 5.0f))
+                        {
+                            AvailablePowerUps.RemoveAt(i);
+                        }
+                    }
+                }
+
+                // Select a random power-up from remaining options
+                if (AvailablePowerUps.Num() > 0)
+                {
+                    int32 RandomIndex = FMath::RandRange(0, AvailablePowerUps.Num() - 1);
+                    EPowerUpType SelectedPowerUp = AvailablePowerUps[RandomIndex];
+
+                    // Apply power-up effects directly
+                    const float PowerUpDuration = 10.0f;
+                    FTimerHandle PowerUpTimerHandle;
+
+                    switch (SelectedPowerUp)
+                    {
+                        case EPowerUpType::SPEED_BOOST:
+                            Player->GetCharacterMovement()->MaxWalkSpeed *= 1.5f;
+                            GetWorld()->GetTimerManager().SetTimer(
+                                PowerUpTimerHandle,
+                                [Player]()
+                                {
+                                    if (IsValid(Player))
+                                    {
+                                        Player->GetCharacterMovement()->MaxWalkSpeed /= 1.5f;
+                                    }
+                                },
+                                PowerUpDuration,
+                                false);
+                            break;
+                            
+                        case EPowerUpType::DAMAGE_MULTIPLIER:
+                            Player->DamageMultiplier = 2.0f;
+                            GetWorld()->GetTimerManager().SetTimer(
+                                PowerUpTimerHandle,
+                                [Player]()
+                                {
+                                    if (IsValid(Player))
+                                    {
+                                        Player->DamageMultiplier = 1.0f;
+                                    }
+                                },
+                                PowerUpDuration,
+                                false);
+                            break;
+                            
+                        case EPowerUpType::RAPID_FIRE:
+                            Player->ModifyFireRate(0.5f);  // Reduce fire rate by half
+                            GetWorld()->GetTimerManager().SetTimer(
+                                PowerUpTimerHandle,
+                                [Player]()
+                                {
+                                    if (IsValid(Player))
+                                    {
+                                        Player->ModifyFireRate(1.0f, true);  // Reset to original fire rate
+                                    }
+                                },
+                                PowerUpDuration,
+                                false);
+                            break;
+                            
+                        case EPowerUpType::INVINCIBILITY:
+                            Player->bIsInvulnerable = true;
+                            GetWorld()->GetTimerManager().SetTimer(
+                                PowerUpTimerHandle,
+                                [Player]()
+                                {
+                                    if (IsValid(Player))
+                                    {
+                                        Player->bIsInvulnerable = false;
+                                    }
+                                },
+                                PowerUpDuration,
+                                false);
+                            break;
+                            
+                        case EPowerUpType::DOUBLE_POINTS:
+                            Player->ScoreMultiplier = 2.0f;
+                            GetWorld()->GetTimerManager().SetTimer(
+                                PowerUpTimerHandle,
+                                [Player]()
+                                {
+                                    if (IsValid(Player))
+                                    {
+                                        Player->ScoreMultiplier = 1.0f;
+                                    }
+                                },
+                                PowerUpDuration,
+                                false);
+                            break;
+
+                        case EPowerUpType::HEALTH_REGEN:
+                            Player->ActivateHealthRegen(PowerUpDuration, 20.0f); // Regenerate 20 health per second
+                            break;
+
+                        case EPowerUpType::SHIELD:
+                            Player->ActivateShield(PowerUpDuration, 100.0f); // 100 shield points
+                            break;
+
+                        case EPowerUpType::INFINITE_AMMO:
+                            Player->ActivateInfiniteAmmo(PowerUpDuration);
+                            break;
+
+                        case EPowerUpType::EXPLOSIVE_ROUNDS:
+                            Player->ActivateExplosiveRounds(PowerUpDuration, 200.0f, 50.0f); // 200 radius, 50 damage
+                            break;
+                    }
+                    
+                    // Update HUD
+                    if (GameHUD)
                     {
                         GameHUD->AddActivePowerUp(SelectedPowerUp, PowerUpDuration);
                     }

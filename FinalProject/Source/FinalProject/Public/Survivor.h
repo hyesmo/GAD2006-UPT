@@ -25,12 +25,27 @@ public:
     // Override take damage
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+    // Combat variables
+    UPROPERTY()
+    bool bCanFire;
+
+    UPROPERTY()
+    bool bIsFiring;
+
+    UPROPERTY()
+    FTimerHandle FireTimerHandle;
+
+    UPROPERTY()
+    FTimerHandle ReloadTimerHandle;
+
+    // Movement properties
     UPROPERTY(EditAnywhere, Category = "Movement")
     float WalkSpeed;
 
     UPROPERTY(EditAnywhere, Category = "Movement")
     float SprintSpeed;
 
+    // Combat properties
     UPROPERTY(EditAnywhere, Category = "Combat")
     float MaxHealth;
 
@@ -63,6 +78,15 @@ public:
     float GetReloadProgress() const { return ReloadProgress; }
     bool IsReloading() const { return bIsReloading; }
 
+    // Combat functions
+    void StartFire();
+    void StopFire();
+    void Fire();
+    void UpdateFireRate();
+    void Reload();
+    void ThrowGrenade();
+    void SwitchWeapon();
+
     // Power-up related properties
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
     float DamageMultiplier;
@@ -73,8 +97,45 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
     bool bIsInvulnerable;
 
+    // New power-up properties
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasShield;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float ShieldHealth;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float MaxShieldHealth;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasHealthRegen;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float HealthRegenRate;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasInfiniteAmmo;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    bool bHasExplosiveRounds;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float ExplosionRadius;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Power-Ups")
+    float ExplosionDamage;
+
     // Function to modify fire rate (for power-ups)
     void ModifyFireRate(float Multiplier, bool bResetToOriginal = false);
+
+    // New power-up functions
+    void ActivateShield(float Duration, float ShieldAmount);
+    void ActivateHealthRegen(float Duration, float RegenRate);
+    void ActivateInfiniteAmmo(float Duration);
+    void ActivateExplosiveRounds(float Duration, float Radius, float Damage);
+
+    UFUNCTION()
+    void RestartGame();
 
 protected:
     // Called when the game starts or when spawned
@@ -84,27 +145,18 @@ protected:
     void MoveRight(float Value);
     void StartSprint();
     void StopSprint();
-    
-    // Combat functions
-    void StartFire();
-    void StopFire();
-    void Fire();
-    void Reload();
-    void ThrowGrenade();
-    void SwitchWeapon();
 
-    FVector GetMouseWorldLocation() const;
+    // Store original fire rate
+    float OriginalFireRate;
 
-    // Combat variables
-    FTimerHandle FireTimerHandle;
-    bool bCanFire;
-    bool bIsFiring;
+    // New power-up helper functions
+    void UpdateHealthRegen(float DeltaTime);
+    void HandleShieldDamage(float& DamageAmount);
+    void UpdatePowerUpEffects(float DeltaTime);
 
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* VisibleComponent;
 
-    void UpdateFireRate();
-
-    // Store original fire rate for power-ups
-    float OriginalFireRate;
+    // Get mouse position in world space
+    FVector GetMouseWorldLocation() const;
 }; 

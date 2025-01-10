@@ -5,6 +5,7 @@
 #include "Survivor.h"
 #include "WaveManager.h"
 #include "PowerUp.h"
+#include "TutorialManager.h"
 #include "GameHUD.generated.h"
 
 // Struct to track active power-ups
@@ -58,12 +59,16 @@ public:
     UPROPERTY()
     AWaveManager* WaveManager;
 
+    // New method to check if power-up is active with more than specified duration
+    bool IsPowerUpActiveWithDuration(EPowerUpType Type, float MinDuration) const;
+
 protected:
     void DrawHealthBar();
     void DrawWaveInfo();
     void DrawPowerUpStatus();
     void DrawAmmoCount();
     void DrawScore();
+    void DrawLoseScreen();
 
 private:
     UPROPERTY()

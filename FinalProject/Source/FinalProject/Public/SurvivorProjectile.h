@@ -26,6 +26,19 @@ public:
     UPROPERTY(EditAnywhere, Category = "Combat")
     float LifeSpan = 3.0f;
 
+    // Explosive rounds properties
+    UPROPERTY(EditAnywhere, Category = "Combat|Explosive")
+    bool bIsExplosive;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|Explosive")
+    float ExplosionRadius;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|Explosive")
+    float ExplosionDamage;
+
+    UPROPERTY(EditAnywhere, Category = "Combat|Explosive")
+    bool bDrawDebugSphere;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -33,4 +46,7 @@ protected:
     void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
                UPrimitiveComponent* OtherComponent, FVector NormalImpulse, 
                const FHitResult& Hit);
+
+    // Helper function for explosion damage
+    void ApplyExplosionDamage(const FVector& ExplosionLocation);
 }; 

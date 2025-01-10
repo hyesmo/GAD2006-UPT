@@ -6,6 +6,7 @@
 #include "Enemy.h"
 #include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 ASurvivorProjectile::ASurvivorProjectile()
 {
@@ -34,6 +35,12 @@ ASurvivorProjectile::ASurvivorProjectile()
 
     // Set default lifespan
     InitialLifeSpan = LifeSpan;
+
+    // Initialize explosive properties
+    bIsExplosive = false;
+    ExplosionRadius = 200.0f;
+    ExplosionDamage = 50.0f;
+    bDrawDebugSphere = false;
 }
 
 void ASurvivorProjectile::BeginPlay()
@@ -50,14 +57,48 @@ void ASurvivorProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* Other
 {
     if (OtherActor && OtherActor != this)
     {
-        // Check if we hit an enemy
-        if (AEnemy* Enemy = Cast<AEnemy>(OtherActor))
+        // Apply direct damage first
+        UGameplayStatics::ApplyDamage(OtherActor, Damage, GetInstigatorController(), this, UDamageType::StaticClass());
+
+        // Handle explosion if enabled
+        if (bIsExplosive)
         {
-            // Use UGameplayStatics::ApplyDamage instead of direct TakeDamage call
-            UGameplayStatics::ApplyDamage(Enemy, Damage, GetInstigatorController(), this, UDamageType::StaticClass());
+            ApplyExplosionDamage(GetActorLocation());
+
+            // Optional: Add visual effects for explosion
+            if (bDrawDebugSphere)
+            {
+                DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f);
+            }
         }
-        
+
         // Destroy the projectile
         Destroy();
+    }
+}
+
+void ASurvivorProjectile::ApplyExplosionDamage(const FVector& ExplosionLocation)
+{
+    // Get all actors within explosion radius
+    TArray<AActor*> OverlappingActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemy::StaticClass(), OverlappingActors);
+
+    for (AActor* Actor : OverlappingActors)
+    {
+        if (Actor && Actor != GetOwner())
+        {
+            float Distance = FVector::Distance(ExplosionLocation, Actor->GetActorLocation());
+            
+            // Only damage actors within explosion radius
+            if (Distance <= ExplosionRadius)
+            {
+                // Calculate damage falloff based on distance
+                float DamageFalloff = 1.0f - (Distance / ExplosionRadius);
+                float FinalDamage = ExplosionDamage * DamageFalloff;
+                
+                // Apply explosion damage
+                UGameplayStatics::ApplyDamage(Actor, FinalDamage, GetInstigatorController(), this, UDamageType::StaticClass());
+            }
+        }
     }
 } 

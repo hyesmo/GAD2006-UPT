@@ -1,6 +1,8 @@
 #include "WaveManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "TutorialHUD.h"
+#include "GameHUD.h"
 
 AWaveManager::AWaveManager()
 {
@@ -11,6 +13,79 @@ void AWaveManager::BeginPlay()
 {
     Super::BeginPlay();
     UE_LOG(LogTemp, Warning, TEXT("WaveManager BeginPlay"));
+    
+    // Spawn tutorial manager
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+    TutorialManager = GetWorld()->SpawnActor<ATutorialManager>(ATutorialManager::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    
+    if (TutorialManager)
+    {
+        TutorialManager->OnTutorialCompleted.AddDynamic(this, &AWaveManager::OnTutorialCompleted);
+        UE_LOG(LogTemp, Warning, TEXT("Tutorial Manager spawned successfully"));
+        
+        // Set TutorialHUD
+        if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+        {
+            if (TutorialHUDClass)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Setting TutorialHUD class: %s"), *TutorialHUDClass->GetName());
+                PC->ClientSetHUD(TutorialHUDClass);
+                
+                // Verify HUD was set
+                if (PC->GetHUD() && PC->GetHUD()->IsA(TutorialHUDClass))
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("TutorialHUD set successfully"));
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error, TEXT("Failed to set TutorialHUD"));
+                    StartWave(); // Fallback to starting wave
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("TutorialHUDClass is not set in WaveManager Blueprint"));
+                StartWave(); // Fallback: start wave immediately if HUD class is not set
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to get PlayerController"));
+            StartWave();
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to spawn TutorialManager"));
+        StartWave(); // Fallback: start wave immediately if tutorial manager fails to spawn
+    }
+}
+
+void AWaveManager::OnTutorialCompleted()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Tutorial completed, switching to GameHUD"));
+    
+    // Switch back to GameHUD
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    {
+        PC->ClientSetHUD(AGameHUD::StaticClass());
+        
+        // Verify HUD was switched
+        if (PC->GetHUD() && PC->GetHUD()->IsA(AGameHUD::StaticClass()))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Successfully switched to GameHUD"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to switch to GameHUD"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to get PlayerController in OnTutorialCompleted"));
+    }
+    
     StartWave();
 }
 
