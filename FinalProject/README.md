@@ -11,7 +11,7 @@ A top-down zombie survival game where players face increasingly challenging wave
 - Movement Speed: 600 units (1000 when sprinting)
 - Ammo Capacity: 60 rounds
 - Reload Time: 1 seconds
-- Combat capabilities: Shooting, grenades
+- Combat capabilities: Shooting
 - Resource management: Health, ammo, power-ups
 
 #### Enemies
@@ -46,6 +46,7 @@ A top-down zombie survival game where players face increasingly challenging wave
 - Maximize score through zombie kills
 - Collect and utilize power-ups strategically
 - Progress through increasingly difficult waves
+- Survive as long as possible
 
 ### Mechanics
 
@@ -58,7 +59,6 @@ A top-down zombie survival game where players face increasingly challenging wave
 #### Combat
 - Shooting mechanics with ammo management
 - Reload system with progress tracking
-- Grenade throwing capability
 - Weapon switching
 - Different damage types and ranges
 
@@ -75,6 +75,12 @@ Available Power-ups:
 7. Shield
 8. Infinite Ammo
 9. Explosive Rounds
+10. Vampire
+11. Spread
+12. Frozen Bullets
+13. Freeze Aura
+14. Chain Lightning
+
 
 ### Rules
 
@@ -115,6 +121,18 @@ Source/
 │   │   ├── WaveManager.h    # Wave system
 │   │   └── TopDownGameMode.h # Game mode
 │   ├── Private/                # Implementation files
+│   │   ├── Survivor.cpp       # Player character implementation
+│   │   ├── SurvivorProjectile.cpp # Projectile system
+│   │   ├── TopDownPlayerController.cpp # Input handling
+│   │   ├── TopDownGameMode.cpp # Game mode
+│   │   ├── Enemy.cpp # Enemy base class
+│   │   ├── StandardZombie.cpp # Standard enemy type
+│   │   ├── FastZombie.cpp # Fast enemy variant
+│   │   ├── TankZombie.cpp # Tank enemy variant
+│   │   ├── PowerUp.cpp # Power-up system
+│   │   ├── GameHUD.cpp # Main game HUD
+│   │   ├── TutorialHUD.cpp # Tutorial interface
+│   │   └── WaveManager.cpp # Wave system
 │   ├── FinalProject.Build.cs  # Build configuration
 │   ├── FinalProject.cpp       # Module implementation
 │   └── FinalProject.h         # Module header
